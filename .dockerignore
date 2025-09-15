@@ -1,0 +1,44 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+Readme.md
+*.md
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+target/
+*.jar
+*.war
+*.ear
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+temp/
+tmp/
+
+# Environment files
+.env
+.env.local
+.env.example
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore

@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  email-bot:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DATABASE_URL=jdbc:mysql://db:3306/emailbot
+      - DATABASE_USERNAME=emailbot
+      - DATABASE_PASSWORD=emailbot123
+      - DATABASE_DRIVER=com.mysql.cj.jdbc.Driver
+      - JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQLDialect
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
+      - ./temp:/app/temp
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_DATABASE=emailbot
+      - MYSQL_USER=emailbot
+      - MYSQL_PASSWORD=emailbot123
+      - MYSQL_ROOT_PASSWORD=rootpassword123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
