@@ -44,37 +44,63 @@ ServiceRequestEmailBotJava/
 │   │   │               ├── config/
 │   │   │               │   └── Config.java                          # Configuration properties
 │   │   │               ├── controller/
-│   │   │               │   └── WebhookController.java               # REST API endpoints
+│   │   │               │   └── WebhookHandler.java                  # REST API endpoints
 │   │   │               ├── model/
-│   │   │               │   ├── EmailData.java                       # Email data model
-│   │   │               │   ├── MailForm.java                        # Mail form model
-│   │   │               │   ├── OutlookSession.java                  # Outlook session model
-│   │   │               │   └── ServiceRequestId.java                # SR ID mapping model
+│   │   │               │   └── EmailData.java                       # Email data model
+│   │   │               ├── repository/
+│   │   │               │   └── DbService.java                       # Database operations (READ-ONLY)
 │   │   │               ├── service/
-│   │   │               │   ├── EmailSchedulerService.java           # Main email scheduler
-│   │   │               │   ├── EmailProcessorService.java           # Email processing logic
-│   │   │               │   ├── OutlookAuthService.java              # Outlook authentication
-│   │   │               │   ├── OutlookService.java                  # Outlook API integration
-│   │   │               │   ├── OutlookServiceImpl.java              # Outlook service implementation
-│   │   │               │   ├── OutlookSessionService.java           # Session management
-│   │   │               │   ├── ServiceRequestService.java           # Service request operations
-│   │   │               │   ├── CommentsService.java                 # Comments and attachments
-│   │   │               │   ├── QuestionnaireService.java            # Questionnaire handling
-│   │   │               │   ├── AdaptiveCardService.java             # Adaptive cards for Slack
-│   │   │               │   ├── AttachmentService.java               # File attachment handling
-│   │   │               │   ├── DbService.java                       # Database operations
-│   │   │               │   └── SRServiceImpl.java                   # SR service implementation
+│   │   │               │   ├── LocalStorageService.java             # Local JSON storage
+│   │   │               │   ├── ai/
+│   │   │               │   │   └── ClaudeService.java               # AI text analysis
+│   │   │               │   ├── attachment/
+│   │   │               │   │   ├── AttachmentService.java           # File attachment handling
+│   │   │               │   │   └── AttachmentServiceImpl.java       # Attachment implementation
+│   │   │               │   ├── auth/
+│   │   │               │   │   ├── AuthService.java                 # General authentication
+│   │   │               │   │   └── AuthServiceOutlook.java          # Outlook authentication
+│   │   │               │   ├── comments/
+│   │   │               │   │   ├── CommentsService.java             # Comments handling
+│   │   │               │   │   └── CommentServiceImpl.java          # Comments implementation
+│   │   │               │   ├── core/
+│   │   │               │   │   ├── EmailSchedulerService.java       # Main email scheduler
+│   │   │               │   │   └── EmailProcessorService.java       # Email processing logic
+│   │   │               │   ├── outlook/
+│   │   │               │   │   ├── OutlookAuthService.java          # Outlook authentication
+│   │   │               │   │   ├── OutlookService.java              # Outlook API integration
+│   │   │               │   │   ├── OutlookServiceImpl.java          # Outlook implementation
+│   │   │               │   │   ├── OutlookSession.java              # Outlook session model
+│   │   │               │   │   └── OutlookSessionService.java       # Session management
+│   │   │               │   ├── questionnaire/
+│   │   │               │   │   ├── GetQuestionnaire.java            # Questionnaire retrieval
+│   │   │               │   │   ├── MailForm.java                    # Mail form handling
+│   │   │               │   │   └── SubmitQuestionnaire.java         # Questionnaire submission
+│   │   │               │   ├── servicerequest/
+│   │   │               │   │   ├── ServiceRequest.java              # Service request operations
+│   │   │               │   │   ├── ServiceRequestId.java            # SR ID generation
+│   │   │               │   │   └── SubmitServiceRequest.java        # SR submission
+│   │   │               │   └── slack/
+│   │   │               │       ├── AdaptiveCardService.java         # Adaptive cards for Slack
+│   │   │               │       └── AdaptiveCardServiceImpl.java     # Slack implementation
 │   │   │               └── util/
 │   │   │                   └── UserCredentials.java                 # User credential management
 │   │   └── resources/
 │   │       ├── application.properties                               # Spring Boot configuration
-│   │       └── static/                                             # Static web resources
+│   │       ├── application-dev.properties                           # Development profile
+│   │       ├── application-prod.properties                          # Production profile
+│   │       └── logback-spring.xml                                   # Logging configuration
 │   └── test/
 │       └── java/                                                    # Unit tests
+├── data/                                                            # Local storage directory
+│   ├── thread_sr_mapping.json                                      # Thread to SR mappings
+│   ├── session_data.json                                           # Session data
+│   └── email_cache.json                                            # Email cache
 ├── pom.xml                                                          # Maven dependencies
 ├── .env.example                                                     # Environment variables template
-├── README.md                                                        # This file
-└── [Legacy files marked for deletion]                              # Old root-level Java files
+├── Dockerfile                                                       # Docker configuration
+├── docker-compose.yml                                              # Docker Compose setup
+├── init.sql                                                        # Database initialization (READ-ONLY)
+└── README.md                                                        # This file
 ```
 
 ## 🔧 Prerequisites
@@ -204,24 +230,78 @@ DEFAULT_UNIT_NUMBER=000001                    # Default organizational unit
 
 ### 7. Build and Run
 
-#### Development Mode (H2 Database):
+#### Quick Start (Development Mode with H2):
 ```bash
-# Comment out MySQL config in application.properties
-# Uncomment H2 config lines
+# 1. Clone and navigate to project
+git clone <repository-url>
+cd ServiceRequestEmailBotJava
+
+# 2. Set up environment variables (copy and edit .env.example)
+cp .env.example .env
+# Edit .env file with your API keys and configuration
+
+# 3. Build and run with Maven wrapper
+./mvnw clean install
+./mvnw spring-boot:run
+
+# Alternative: Use system Maven
 mvn clean install
 mvn spring-boot:run
 ```
 
 #### Production Mode (MySQL/PostgreSQL):
 ```bash
-mvn clean install
-mvn spring-boot:run -Dspring.profiles.active=prod
+# 1. Set up production database (see Database Setup section above)
+
+# 2. Configure production environment variables
+export SPRING_PROFILES_ACTIVE=prod
+export DATABASE_URL=jdbc:mysql://localhost:3306/servicerequest
+export DATABASE_USERNAME=srbot
+export DATABASE_PASSWORD=your_password
+# ... other production variables
+
+# 3. Build and run
+./mvnw clean package
+./mvnw spring-boot:run -Dspring.profiles.active=prod
+
+# Or run the JAR directly
+java -jar target/email-bot-1.0.0.jar --spring.profiles.active=prod
 ```
 
-#### Using JAR file:
+#### Docker Deployment:
 ```bash
-mvn clean package
-java -jar target/service-request-emailbot-1.0.0.jar
+# 1. Build Docker image
+docker build -t service-request-emailbot .
+
+# 2. Run with Docker Compose (includes MySQL)
+docker-compose up -d
+
+# 3. View logs
+docker-compose logs -f email-bot
+```
+
+#### Application Startup Verification:
+Once started, verify the application is running:
+```bash
+# Check application health
+curl http://localhost:8080/actuator/health
+
+# View application logs
+tail -f logs/service-request-email-bot.log
+
+# Check if email processing is active (look for scheduled task logs)
+```
+
+#### Stopping the Application:
+```bash
+# If running with Maven
+Ctrl+C
+
+# If running as JAR in background
+pkill -f "email-bot-1.0.0.jar"
+
+# If running with Docker
+docker-compose down
 ```
 
 ## 🔍 Monitoring & Logs

@@ -1,6 +1,8 @@
-package com.servicerequest.emailbot.service;
+package com.servicerequest.emailbot.service.outlook;
 
 import com.servicerequest.emailbot.model.EmailData;
+import com.servicerequest.emailbot.service.AuthServiceOutlook;
+import com.servicerequest.emailbot.service.OutlookSession;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;

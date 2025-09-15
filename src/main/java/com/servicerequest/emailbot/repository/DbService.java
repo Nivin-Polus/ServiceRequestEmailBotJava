@@ -1,13 +1,13 @@
-package com.servicerequest.emailbot.service;
+package com.servicerequest.emailbot.repository;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 import java.sql.*;
 import java.util.*;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-@Service
+@Repository
 public class DbService {
     private static final Dotenv dotenv = Dotenv.load();
     private static final HikariDataSource dataSource;
