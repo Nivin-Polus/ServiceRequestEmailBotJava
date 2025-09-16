@@ -1,6 +1,7 @@
 package com.servicerequest.emailbot.service.slack;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -14,14 +15,16 @@ import java.util.Map;
 public class AdaptiveCardService {
     private final HttpClient client;
     private final ObjectMapper mapper;
+    private final Dotenv dotenv;
 
     public AdaptiveCardService() {
         this.client = HttpClient.newHttpClient();
         this.mapper = new ObjectMapper();
+        this.dotenv = Dotenv.configure().ignoreIfMissing().load();
     }
 
     public boolean sendSlackNotification(String srId, String message, String channel) throws Exception {
-        String slackToken = System.getenv("SLACK_BOT_TOKEN");
+        String slackToken = dotenv.get("SLACK_BOT_TOKEN");
         if (slackToken == null) {
             System.out.println("SLACK_BOT_TOKEN not set, skipping Slack notification");
             return false;

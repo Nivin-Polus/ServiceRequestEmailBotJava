@@ -7,6 +7,7 @@ import com.servicerequest.emailbot.service.ai.ClaudeService;
 import com.servicerequest.emailbot.service.auth.AuthService;
 import com.servicerequest.emailbot.service.auth.AuthServiceOutlook;
 import com.servicerequest.emailbot.service.outlook.OutlookService;
+import com.servicerequest.emailbot.service.outlook.OutlookSession;
 import com.servicerequest.emailbot.service.outlook.OutlookSessionService;
 import com.servicerequest.emailbot.service.servicerequest.ServiceRequest;
 import com.servicerequest.emailbot.service.slack.AdaptiveCardService;
@@ -49,6 +50,9 @@ public class EmailProcessorService {
     public void processEmails() {
         try {
             System.out.println("Starting email processing...");
+            
+            // Ensure authentication is initialized
+            ensureAuthenticated();
             
             // Get unread emails
             List<EmailData> emails = outlookService.getUnreadEmails(
@@ -96,39 +100,57 @@ public class EmailProcessorService {
     }
     
     private void handleNewEmail(EmailData email) throws Exception {
-        // Analyze email with Claude AI
-        Map<String, String> analysis = claudeService.analyzeEmail(email.getBody(), email.getSubject());
+        String srId = null;
         
-        // Create service request
-        String authToken = authService.getValidToken();
-        String srId = serviceRequestService.createServiceRequest(
-            Map.of(
-                "subject", email.getSubject(),
-                "description", email.getBody(),
-                "category", analysis.get("category"),
-                "type", analysis.get("type"),
-                "priority", analysis.get("priority"),
-                "requesterEmail", email.getSender()
-            ),
-            authToken
-        );
-        
-        // Save thread mapping locally
-        localStorageService.saveThreadMapping(
-            email.getConversationId(), 
-            srId, 
-            email.getSender(), 
-            email.getSubject()
-        );
-        
-        // Send Slack notification
-        slackService.sendSlackNotification(
-            srId, 
-            "New service request created from email: " + email.getSubject(), 
-            null
-        );
-        
-        System.out.println("Created new service request: " + srId);
+        try {
+            System.out.println("Starting Claude AI analysis...");
+            // Analyze email with Claude AI
+            Map<String, String> analysis = claudeService.analyzeEmail(email.getBody(), email.getSubject());
+            System.out.println("Claude AI analysis completed: " + analysis);
+            
+            // Create service request
+            System.out.println("Getting authentication token for service tracker...");
+            String authToken = authService.getValidToken(email.getSender());
+            System.out.println("Authentication token obtained: " + (authToken != null ? "SUCCESS" : "FAILED"));
+            
+            if (authToken == null) {
+                throw new RuntimeException("Failed to obtain authentication token for: " + email.getSender());
+            }
+            
+            System.out.println("Creating service request...");
+            srId = serviceRequestService.createServiceRequest(
+                analysis.get("category"),
+                analysis.get("type"),
+                analysis.get("department"),
+                analysis.get("subject"),
+                analysis.get("description"),
+                analysis.get("priority"),
+                email.getSender()
+            );
+            System.out.println("Service request created with ID: " + srId);
+            
+            // Save thread mapping locally
+            localStorageService.saveThreadMapping(
+                email.getConversationId(), 
+                srId, 
+                email.getSender(), 
+                email.getSubject()
+            );
+            
+            // Send Slack notification
+            slackService.sendSlackNotification(
+                srId, 
+                "New service request created from email: " + email.getSubject(), 
+                null
+            );
+            
+            System.out.println("Created new service request: " + srId);
+            
+        } catch (Exception e) {
+            System.err.println("Error in handleNewEmail: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
     
     private void handleFollowUpEmail(EmailData email, String srId) throws Exception {
@@ -143,5 +165,23 @@ public class EmailProcessorService {
             "Follow-up received from " + email.getSender() + ": " + email.getSubject(), 
             null
         );
+    }
+    
+    private void ensureAuthenticated() throws Exception {
+        OutlookSession session = sessionService.getCurrentSession();
+        
+        // Check if we need to authenticate
+        if (session.getAuthToken() == null || session.isTokenExpired()) {
+            System.out.println("Initializing Outlook authentication...");
+            
+            // Initialize tokens in AuthServiceOutlook
+            String accessToken = outlookAuth.getValidAccessToken();
+            
+            // Update session with the token
+            session.setAuthToken(accessToken);
+            session.setTokenExpiryTime(System.currentTimeMillis() + (3600 * 1000)); // 1 hour from now
+            
+            System.out.println("Authentication initialized successfully");
+        }
     }
 }

@@ -1,7 +1,7 @@
 package com.servicerequest.emailbot.util;
 
-import com.servicerequest.emailbot.service.OutlookSession;
-import com.servicerequest.emailbot.service.AuthServiceOutlook;
+import com.servicerequest.emailbot.service.outlook.OutlookSession;
+import com.servicerequest.emailbot.service.auth.AuthServiceOutlook;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +88,7 @@ public class EmailUtils {
         return pattern.matcher(body).find();
     }
 
-    public static void handleFollowupComment(OutlookSession outlookSession, OutlookAuthService outlookAuth, 
+    public static void handleFollowupComment(OutlookSession outlookSession, AuthServiceOutlook outlookAuth, 
                                            String messageId, String sender, String subject, String body, 
                                            boolean hasAttachments, String existingSrId) {
         logger.info("💬 Processing follow-up comment for SR {}", existingSrId);

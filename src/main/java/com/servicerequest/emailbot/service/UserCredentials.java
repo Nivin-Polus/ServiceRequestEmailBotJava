@@ -3,7 +3,7 @@ package com.servicerequest.emailbot.service;
 import org.springframework.stereotype.Component;
 import java.util.*;
 
-@Component
+@Component("mockUserCredentials")
 public class UserCredentials {
     
     public static Map<String, String> getCredentials(String emailId) {

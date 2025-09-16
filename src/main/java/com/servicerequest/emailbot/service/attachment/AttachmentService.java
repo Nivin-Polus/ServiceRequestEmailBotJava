@@ -1,5 +1,8 @@
 package com.servicerequest.emailbot.service.attachment;
 
+import com.servicerequest.emailbot.service.auth.AuthService;
+import io.github.cdimascio.dotenv.Dotenv;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -12,16 +15,26 @@ import java.util.List;
 @Service
 public class AttachmentService {
     
-    public boolean uploadAttachment(String srId, File attachment, String authToken) throws Exception {
-        String apiUrl = System.getenv("ATTACHMENT_API");
+    @Autowired
+    private AuthService authService;
+    
+    private final Dotenv dotenv;
+    
+    public AttachmentService() {
+        this.dotenv = Dotenv.configure().ignoreIfMissing().load();
+    }
+    
+    public boolean uploadAttachment(String srId, File attachment, String senderEmail) throws Exception {
+        String apiUrl = dotenv.get("ATTACHMENT_API");
         if (apiUrl == null) {
             throw new RuntimeException("ATTACHMENT_API environment variable not set");
         }
 
-        // Implementation for attachment upload
-        System.out.println("Uploading attachment: " + attachment.getName() + " for SR: " + srId);
+        // Get authentication token for the sender
+        String authToken = authService.getValidToken(senderEmail);
+        System.out.println("Uploading attachment: " + attachment.getName() + " for SR: " + srId + " (sender: " + senderEmail + ")");
         
-        // TODO: Implement actual file upload logic
+        // TODO: Implement actual file upload logic with authToken
         return true;
     }
     

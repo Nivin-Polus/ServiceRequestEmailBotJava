@@ -1,16 +1,18 @@
 package com.servicerequest.emailbot.service.outlook;
 
 import com.servicerequest.emailbot.model.EmailData;
-import com.servicerequest.emailbot.service.AuthServiceOutlook;
-import com.servicerequest.emailbot.service.OutlookSession;
+import com.servicerequest.emailbot.service.auth.AuthServiceOutlook;
+import com.servicerequest.emailbot.service.outlook.OutlookSession;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Component
@@ -26,7 +28,8 @@ public class OutlookService {
     }
 
     public List<EmailData> getUnreadEmails(OutlookSession session, AuthServiceOutlook auth) throws Exception {
-        String url = GRAPH_API_BASE + "/me/messages?$filter=isRead eq false&$top=50";
+        String filter = URLEncoder.encode("isRead eq false", StandardCharsets.UTF_8);
+        String url = GRAPH_API_BASE + "/me/messages?$filter=" + filter + "&$top=50";
         
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))

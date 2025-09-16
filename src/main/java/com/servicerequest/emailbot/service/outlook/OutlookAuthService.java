@@ -1,6 +1,6 @@
 package com.servicerequest.emailbot.service.outlook;
 
-import com.servicerequest.emailbot.service.AuthServiceOutlook;
+import com.servicerequest.emailbot.service.auth.AuthServiceOutlook;
 import org.springframework.stereotype.Service;
 
 @Service
